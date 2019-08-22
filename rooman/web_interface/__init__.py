@@ -1,2 +1,1 @@
-from .web_interface import RoomanWebInterface
 from .async_web_interface import RoomanAsyncWebInterface

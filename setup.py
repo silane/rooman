@@ -8,5 +8,4 @@ setup(
     author='silane',
     author_email='silane@silane8.net',
     packages=find_packages(),
-    install_requires=['threading-utils'],
 )
