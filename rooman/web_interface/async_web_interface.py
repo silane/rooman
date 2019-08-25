@@ -26,12 +26,50 @@ class RoomanAsyncWebInterface:
                 raise errors.ParameterFormatAPIError([key_name])
             return k
 
+        async def read_body():
+            body, more_body = b'', True
+            while more_body:
+                message = await receive()
+                body += message.get('body', b'')
+                more_body = message.get('more_body', False)
+            return body
+
+        async def respond(http_code, code, payload):
+            header = [
+                (b'Content-type', b'application/json; charset=utf-8'),
+            ]
+            body = json.dumps(
+                {'code': code, 'payload': payload},
+                ensure_ascii=False).encode('utf-8')
+            await send({
+                'type': 'http.response.start',
+                'status': http_code,
+                'headers': header,
+            })
+            await send({
+                'type': 'http.response.body',
+                'body': body
+            })
+
         assert scope['type'] == 'http'
 
         path = scope['path']
-        query_string = scope['query_string']
-        query = structured_query.parse(query_string)
         
+        body = await read_body()
+        if body and not body.isspace():
+            try:
+                body = body.decode('utf-8')
+                query = json.loads(body)
+            except UnicodeError:
+                await respond(400, 'invalid_body', 'encoding')
+                return
+            except json.JSONDecodeError:
+                await respond(400, 'invalid_body', 'json')
+                return
+        else:
+            query_string = scope['query_string']
+            query = structured_query.parse(query_string)
+
         free_parameter_missing = False
         http_code, code, payload = None, None, None
         try:
@@ -99,19 +137,5 @@ class RoomanAsyncWebInterface:
             http_code = e.get_http_status_code()
             code = e.get_code()
             payload = e.get_payload()
-            
-        header = [
-            (b'Content-type', b'application/json; charset=utf-8'),
-        ]
-        body = json.dumps(
-            {'code': code, 'payload': payload},
-            ensure_ascii=False).encode('utf-8')
-        await send({
-            'type': 'http.response.start',
-            'status': http_code,
-            'headers': header,
-        })
-        await send({
-            'type': 'http.response.body',
-            'body': body
-        })
+
+        await respond(http_code, code, payload)
