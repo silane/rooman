@@ -69,6 +69,14 @@ class PathNotFoundAPIError(APIError):
         return {'target': self.path}
 
 
+class MethodNotAllowedAPIError(APIError):
+    def get_http_status_code(self):
+        return 405
+
+    def get_code(self):
+        return 'method_not_allowed'
+
+
 class ParameterMissingAPIError(APIError):
     def __init__(self, missing_parameters):
         self.missing_parameters = list(missing_parameters)

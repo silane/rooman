@@ -1,4 +1,3 @@
-import asyncio
 import json
 
 from rooman import structured_query
@@ -75,6 +74,8 @@ class RoomanAsyncWebInterface:
         try:
             try:
                 if path == '/action':
+                    if scope['method'] != 'POST':
+                        raise errors.MethodNotAllowedAPIError()
                     action_id = get_key(query, 'id', str)
                     parameter_exists, parameter = try_get_key(query,
                                                               'parameters')
@@ -82,6 +83,8 @@ class RoomanAsyncWebInterface:
                     response = await self.rooman.invoke_action(action_id,
                                                                parameter)
                 elif path == '/newjob':
+                    if scope['method'] != 'POST':
+                        raise errors.MethodNotAllowedAPIError()
                     job_type_id = get_key(query, 'type_id', str)
                     parameter_exists, parameter = try_get_key(query,
                                                               'parameters')
@@ -89,14 +92,20 @@ class RoomanAsyncWebInterface:
                     response = await self.rooman.new_job(job_type_id,
                                                          parameter)
                 elif path == '/deletejob':
+                    if scope['method'] != 'POST':
+                        raise errors.MethodNotAllowedAPIError()
                     job_id = get_key(query, 'id', str)
                     response = await self.rooman.delete_job(job_id)
                 elif path == '/listjob':
+                    if scope['method'] != 'GET':
+                        raise errors.MethodNotAllowedAPIError()
                     job_type_id = query.get('type_id')
                     if not isinstance(job_type_id, str):
                         job_type_id = None
                     response = await self.rooman.list_job(job_type_id)
                 elif path == '/jobaction':
+                    if scope['method'] != 'POST':
+                        raise errors.MethodNotAllowedAPIError()
                     job_id = get_key(query, 'id', str)
                     parameter_exists, parameter = try_get_key(query,
                                                               'parameters')
